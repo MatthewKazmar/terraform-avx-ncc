@@ -2,7 +2,7 @@ data "google_project" "project" {}
 
 resource "google_compute_router" "this" {
   region  = var.region
-  name    = "${var.prefix}-cr"
+  name    = "${var.workload_vpc_name}-cr"
   network = var.workload_vpc_name
   bgp {
     asn = var.cr_asn
@@ -12,7 +12,7 @@ resource "google_compute_router" "this" {
 resource "google_compute_address" "this" {
   for_each = toset(["pri", "ha"])
 
-  name         = "${var.prefix}-cr-address-${each.value}"
+  name         = "${var.workload_vpc_name}-cr-address-${each.value}"
   region       = var.region
   subnetwork   = var.subnetwork_link
   address_type = "INTERNAL"
@@ -20,7 +20,7 @@ resource "google_compute_address" "this" {
 
 
 resource "google_compute_router_interface" "pri" {
-  name                = "${var.prefix}-cr-int-pri"
+  name                = "${var.workload_vpc_name}-cr-int-pri"
   router              = google_compute_router.this.name
   region              = var.region
   subnetwork          = var.subnetwork_link
@@ -30,7 +30,7 @@ resource "google_compute_router_interface" "pri" {
 
 
 resource "google_compute_router_interface" "ha" {
-  name               = "${var.prefix}-cr-int-ha"
+  name               = "${var.workload_vpc_name}-cr-int-ha"
   router             = google_compute_router.this.name
   region             = var.region
   subnetwork         = var.subnetwork_link
@@ -38,7 +38,7 @@ resource "google_compute_router_interface" "ha" {
 }
 
 resource "google_network_connectivity_spoke" "avx" {
-  name     = "${var.prefix}-ncc-avx"
+  name     = "${var.workload_vpc_name}-ncc-avx"
   location = var.region
   hub      = var.ncc_hub_id
   linked_router_appliance_instances {
@@ -57,7 +57,7 @@ resource "google_network_connectivity_spoke" "avx" {
 resource "google_compute_router_peer" "pri" {
   for_each = { "pri" = 0, "ha" = 1 }
 
-  name                      = "${var.prefix}-ncc-avx-crpri-to-${each.key}-gw"
+  name                      = "${var.workload_vpc_name}-ncc-avx-crpri-to-${each.key}-gw"
   router                    = google_compute_router.this.name
   region                    = var.region
   peer_ip_address           = [var.transit_pri_bgp_ip, var.transit_ha_bgp_ip][each.value]
@@ -70,7 +70,7 @@ resource "google_compute_router_peer" "pri" {
 resource "google_compute_router_peer" "ha" {
   for_each = { "pri" = 0, "ha" = 1 }
 
-  name                      = "${var.prefix}-ncc-avx-crha-to-${each.key}-gw"
+  name                      = "${var.workload_vpc_name}-ncc-avx-crha-to-${each.key}-gw"
   router                    = google_compute_router.this.name
   region                    = var.region
   peer_ip_address           = [var.transit_pri_bgp_ip, var.transit_ha_bgp_ip][each.value]
@@ -82,7 +82,7 @@ resource "google_compute_router_peer" "ha" {
 
 resource "aviatrix_transit_external_device_conn" "avx_to_cr" {
   vpc_id                    = var.transit_vpc_id
-  connection_name           = "${var.prefix}-avx-to-ncc"
+  connection_name           = "${var.workload_vpc_name}-avx-to-ncc"
   gw_name                   = var.transit_pri_name
   connection_type           = "bgp"
   tunnel_protocol           = "LAN"

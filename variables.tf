@@ -3,11 +3,6 @@ variable "region" {
   type        = string
 }
 
-variable "prefix" {
-  description = "Prefix the resources created."
-  type        = string
-}
-
 variable "subnetwork_link" {
   description = "Self_link of BGP subnet."
   type        = string
