@@ -114,6 +114,15 @@ resource "aviatrix_transit_external_device_conn" "avx_to_cr" {
   backup_remote_lan_ip      = google_compute_address.this["ha"].address
   backup_local_lan_ip       = var.transit_ha_bgp_ip
   enable_bgp_lan_activemesh = true
+
+  lifecycle {
+    ignore_changes = [
+      gw_name,
+      local_lan_ip,
+      backup_local_lan_ip,
+      vpc_id
+    ]
+  }
 }
 
 resource "aviatrix_segmentation_network_domain_association" "this" {
