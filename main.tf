@@ -52,6 +52,11 @@ resource "google_network_connectivity_spoke" "avx" {
     }
     site_to_site_data_transfer = true
   }
+  lifecycle {
+    ignore_changes = [
+      linked_router_appliance_instances
+    ]
+  }
 }
 
 resource "google_compute_router_peer" "pri" {
@@ -65,6 +70,13 @@ resource "google_compute_router_peer" "pri" {
   advertised_route_priority = 100
   interface                 = google_compute_router_interface.pri.name
   router_appliance_instance = [google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[0].virtual_machine, google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[1].virtual_machine][each.value]
+
+  lifecycle {
+    ignore_changes = [
+      peer_ip_address,
+      router_appliance_instance
+    ]
+  }
 }
 
 resource "google_compute_router_peer" "ha" {
@@ -78,6 +90,13 @@ resource "google_compute_router_peer" "ha" {
   advertised_route_priority = 100
   interface                 = google_compute_router_interface.ha.name
   router_appliance_instance = [google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[0].virtual_machine, google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[1].virtual_machine][each.value]
+
+  lifecycle {
+    ignore_changes = [
+      peer_ip_address,
+      router_appliance_instance
+    ]
+  }
 }
 
 resource "aviatrix_transit_external_device_conn" "avx_to_cr" {
