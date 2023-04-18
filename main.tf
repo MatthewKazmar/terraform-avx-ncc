@@ -98,6 +98,8 @@ resource "aviatrix_transit_external_device_conn" "avx_to_cr" {
 }
 
 resource "aviatrix_segmentation_network_domain_association" "this" {
-  network_domain_name = var.security_domain
+  count = var.network_domain == null ? 0 : 1
+
+  network_domain_name = var.network_domain
   attachment_name     = aviatrix_transit_external_device_conn.avx_to_cr.connection_name
 }

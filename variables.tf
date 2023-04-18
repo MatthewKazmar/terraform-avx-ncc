@@ -73,9 +73,10 @@ variable "cr_asn" {
   type        = number
 }
 
-variable "security_domain" {
-  description = "Aviatrix security domain"
+variable "network_domain" {
+  description = "Aviatrix network domain"
   type        = string
+  default     = null
 }
 
 locals {
