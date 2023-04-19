@@ -15,7 +15,7 @@ module "avx_ncc_prod_east" {
   prefix             = "${var.prefix}-prod-east"
   subnetwork_link    = module.gcp_prod_vpc.subnet_bgp[var.gcp_east_region].self_link
   ncc_hub_id         = google_network_connectivity_hub.prod.id
-  workload_vpc_name  = module.gcp_prod_vpc.vpc.name
+  ncc_vpc_name  = module.gcp_prod_vpc.vpc.name
   transit_vpc_id     = module.avx_backbone.transit["gcp_east"]["transit_gateway"].vpc_id
   transit_pri_name   = module.avx_backbone.transit["gcp_east"]["transit_gateway"].gw_name
   transit_pri_ip     = module.avx_backbone.transit["gcp_east"]["transit_gateway"].private_ip

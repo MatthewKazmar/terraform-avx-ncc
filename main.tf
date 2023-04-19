@@ -1,9 +1,11 @@
-data "google_project" "project" {}
+data "aviatrix_account" "this" {
+  account_name = var.avx_gcp_account_name
+}
 
 resource "google_compute_router" "this" {
   region  = var.region
-  name    = "${var.workload_vpc_name}-cr"
-  network = var.workload_vpc_name
+  name    = "${var.ncc_vpc_name}-cr"
+  network = var.ncc_vpc_name
   bgp {
     asn = var.cr_asn
   }
@@ -12,7 +14,7 @@ resource "google_compute_router" "this" {
 resource "google_compute_address" "this" {
   for_each = toset(["pri", "ha"])
 
-  name         = "${var.workload_vpc_name}-cr-address-${each.value}"
+  name         = "${var.ncc_vpc_name}-cr-address-${each.value}"
   region       = var.region
   subnetwork   = var.subnetwork_link
   address_type = "INTERNAL"
@@ -20,7 +22,7 @@ resource "google_compute_address" "this" {
 
 
 resource "google_compute_router_interface" "pri" {
-  name                = "${var.workload_vpc_name}-cr-int-pri"
+  name                = "${var.ncc_vpc_name}-cr-int-pri"
   router              = google_compute_router.this.name
   region              = var.region
   subnetwork          = var.subnetwork_link
@@ -30,7 +32,7 @@ resource "google_compute_router_interface" "pri" {
 
 
 resource "google_compute_router_interface" "ha" {
-  name               = "${var.workload_vpc_name}-cr-int-ha"
+  name               = "${var.ncc_vpc_name}-cr-int-ha"
   router             = google_compute_router.this.name
   region             = var.region
   subnetwork         = var.subnetwork_link
@@ -38,17 +40,17 @@ resource "google_compute_router_interface" "ha" {
 }
 
 resource "google_network_connectivity_spoke" "avx" {
-  name     = "${var.workload_vpc_name}-ncc-avx"
+  name     = "${var.ncc_vpc_name}-ncc-avx"
   location = var.region
-  hub      = var.ncc_hub_id
+  hub      = local.ncc_hub_id
   linked_router_appliance_instances {
     instances {
       virtual_machine = local.transit_pri_self_link
-      ip_address      = var.transit_pri_bgp_ip
+      ip_address      = local.transit_pri_bgp_ip
     }
     instances {
       virtual_machine = local.transit_ha_self_link
-      ip_address      = var.transit_ha_bgp_ip
+      ip_address      = local.transit_ha_bgp_ip
     }
     site_to_site_data_transfer = true
   }
@@ -62,10 +64,10 @@ resource "google_network_connectivity_spoke" "avx" {
 resource "google_compute_router_peer" "pri" {
   for_each = { "pri" = 0, "ha" = 1 }
 
-  name                      = "${var.workload_vpc_name}-ncc-avx-crpri-to-${each.key}-gw"
+  name                      = "${var.ncc_vpc_name}-ncc-avx-crpri-to-${each.key}-gw"
   router                    = google_compute_router.this.name
   region                    = var.region
-  peer_ip_address           = [var.transit_pri_bgp_ip, var.transit_ha_bgp_ip][each.value]
+  peer_ip_address           = [local.transit_pri_bgp_ip, local.transit_ha_bgp_ip][each.value]
   peer_asn                  = var.avx_asn
   advertised_route_priority = 100
   interface                 = google_compute_router_interface.pri.name
@@ -82,10 +84,10 @@ resource "google_compute_router_peer" "pri" {
 resource "google_compute_router_peer" "ha" {
   for_each = { "pri" = 0, "ha" = 1 }
 
-  name                      = "${var.workload_vpc_name}-ncc-avx-crha-to-${each.key}-gw"
+  name                      = "${var.ncc_vpc_name}-ncc-avx-crha-to-${each.key}-gw"
   router                    = google_compute_router.this.name
   region                    = var.region
-  peer_ip_address           = [var.transit_pri_bgp_ip, var.transit_ha_bgp_ip][each.value]
+  peer_ip_address           = [local.transit_pri_bgp_ip, local.transit_ha_bgp_ip][each.value]
   peer_asn                  = var.avx_asn
   advertised_route_priority = 100
   interface                 = google_compute_router_interface.ha.name
@@ -100,19 +102,19 @@ resource "google_compute_router_peer" "ha" {
 }
 
 resource "aviatrix_transit_external_device_conn" "avx_to_cr" {
-  vpc_id                    = var.transit_vpc_id
-  connection_name           = "${var.workload_vpc_name}-avx-to-ncc"
-  gw_name                   = var.transit_pri_name
+  vpc_id                    = local.transit_vpc_id
+  connection_name           = "${var.ncc_vpc_name}-avx-to-ncc"
+  gw_name                   = local.transit_pri_name
   connection_type           = "bgp"
   tunnel_protocol           = "LAN"
   bgp_local_as_num          = var.avx_asn
   bgp_remote_as_num         = var.cr_asn
   remote_lan_ip             = google_compute_address.this["pri"].address
-  local_lan_ip              = var.transit_pri_bgp_ip
+  local_lan_ip              = local.transit_pri_bgp_ip
   ha_enabled                = true
   backup_bgp_remote_as_num  = var.cr_asn
   backup_remote_lan_ip      = google_compute_address.this["ha"].address
-  backup_local_lan_ip       = var.transit_ha_bgp_ip
+  backup_local_lan_ip       = local.transit_ha_bgp_ip
   enable_bgp_lan_activemesh = true
 
   lifecycle {
