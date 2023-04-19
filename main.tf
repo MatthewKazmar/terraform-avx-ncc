@@ -2,7 +2,14 @@ data "aviatrix_account" "this" {
   account_name = var.avx_gcp_account_name
 }
 
+data "google_compute_subnetwork" "bgp" {
+  project = data.aviatrix_account.this.gcloud_project_id
+  name = var.bgp_subnetwork_name
+  region = var.region
+}
+
 resource "google_compute_router" "this" {
+  project = data.aviatrix_account.this.gcloud_project_id
   region  = var.region
   name    = "${var.ncc_vpc_name}-cr"
   network = var.ncc_vpc_name
@@ -12,34 +19,38 @@ resource "google_compute_router" "this" {
 }
 
 resource "google_compute_address" "this" {
+  project = data.aviatrix_account.this.gcloud_project_id
   for_each = toset(["pri", "ha"])
 
   name         = "${var.ncc_vpc_name}-cr-address-${each.value}"
   region       = var.region
-  subnetwork   = var.subnetwork_link
+  subnetwork   = data.google_compute_subnetwork.bgp.self_link
   address_type = "INTERNAL"
 }
 
 
 resource "google_compute_router_interface" "pri" {
+  project = data.aviatrix_account.this.gcloud_project_id
   name                = "${var.ncc_vpc_name}-cr-int-pri"
   router              = google_compute_router.this.name
   region              = var.region
-  subnetwork          = var.subnetwork_link
+  subnetwork          = data.google_compute_subnetwork.bgp.self_link
   private_ip_address  = google_compute_address.this["pri"].address
   redundant_interface = google_compute_router_interface.ha.name
 }
 
 
 resource "google_compute_router_interface" "ha" {
+  project = data.aviatrix_account.this.gcloud_project_id
   name               = "${var.ncc_vpc_name}-cr-int-ha"
   router             = google_compute_router.this.name
   region             = var.region
-  subnetwork         = var.subnetwork_link
+  subnetwork         = data.google_compute_subnetwork.bgp.self_link
   private_ip_address = google_compute_address.this["ha"].address
 }
 
 resource "google_network_connectivity_spoke" "avx" {
+  project = data.aviatrix_account.this.gcloud_project_id
   name     = "${var.ncc_vpc_name}-ncc-avx"
   location = var.region
   hub      = local.ncc_hub_id
@@ -62,6 +73,7 @@ resource "google_network_connectivity_spoke" "avx" {
 }
 
 resource "google_compute_router_peer" "pri" {
+  project = data.aviatrix_account.this.gcloud_project_id
   for_each = { "pri" = 0, "ha" = 1 }
 
   name                      = "${var.ncc_vpc_name}-ncc-avx-crpri-to-${each.key}-gw"
@@ -82,6 +94,7 @@ resource "google_compute_router_peer" "pri" {
 }
 
 resource "google_compute_router_peer" "ha" {
+  project = data.aviatrix_account.this.gcloud_project_id
   for_each = { "pri" = 0, "ha" = 1 }
 
   name                      = "${var.ncc_vpc_name}-ncc-avx-crha-to-${each.key}-gw"
