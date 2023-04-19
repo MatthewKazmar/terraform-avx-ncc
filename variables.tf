@@ -69,14 +69,14 @@ locals {
   transit_pri_self_link = "${data.aviatrix_account.this.gcloud_project_id}/zones/${local.transit_pri_zone}/instances/${local.transit_pri_name}"
   transit_ha_self_link  = "${data.aviatrix_account.this.gcloud_project_id}/zones/${local.transit_ha_zone}/instances/${local.transit_ha_name}"
 
-  transit_vpc_id     = nonsensitive(var.transit_gateway.vpc_id)
-  transit_pri_name   = nonsensitive(var.transit_gateway.gw_name)
-  transit_pri_ip     = nonsensitive(var.transit_gateway.private_ip)
-  transit_pri_bgp_ip = nonsensitive(var.transit_gateway.bgp_lan_ip_list[var.bgp_interface_index])
-  transit_pri_zone   = nonsensitive(var.transit_gateway.vpc_reg)
-  transit_ha_name    = nonsensitive(var.transit_gateway.ha_gw_name)
-  transit_ha_ip      = nonsensitive(var.transit_gateway.ha_private_ip)
-  transit_ha_bgp_ip  = nonsensitive(var.transit_gateway.ha_bgp_lan_ip_list[var.bgp_interface_index])
-  transit_ha_zone    = nonsensitive(var.transit_gateway.ha_zone)
-  transit_asn        = coalesce(nonsensitive(var.transit_gateway.local_as_number), var.transit_asn)
+  transit_vpc_id     = var.transit_gateway.vpc_id
+  transit_pri_name   = var.transit_gateway.gw_name
+  transit_pri_ip     = var.transit_gateway.private_ip
+  transit_pri_bgp_ip = var.transit_gateway.bgp_lan_ip_list[var.bgp_interface_index]
+  transit_pri_zone   = var.transit_gateway.vpc_reg
+  transit_ha_name    = var.transit_gateway.ha_gw_name
+  transit_ha_ip      = var.transit_gateway.ha_private_ip
+  transit_ha_bgp_ip  = var.transit_gateway.ha_bgp_lan_ip_list[var.bgp_interface_index]
+  transit_ha_zone    = var.transit_gateway.ha_zone
+  transit_asn        = coalesce(var.transit_gateway.local_as_number, var.transit_asn)
 }
