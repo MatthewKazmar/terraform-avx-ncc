@@ -36,7 +36,7 @@ variable "transit_gateway" {
       ha_private_ip      = string,
       ha_bgp_lan_ip_list = list(string),
       ha_zone            = string,
-      local_as_number    = optional(number)
+      local_as_number    = optional(string)
     }
   )
 }
