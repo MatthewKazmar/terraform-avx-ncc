@@ -25,7 +25,7 @@ variable "bgp_subnetwork" {
 
 variable "transit_gateway" {
   description = "Transit Gateway resource."
-  type = object(any)
+  type = any
 }
 
 variable "bgp_interface_index" {
