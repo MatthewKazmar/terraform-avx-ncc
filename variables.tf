@@ -18,7 +18,7 @@ variable "ncc_vpc_name" {
   type        = string
 }
 
-variable "bgp_subnetwork" {
+variable "bgp_subnetwork_name" {
   description = "Name of BGP subnet in the NCC hub VPC."
   type        = string
 }
@@ -97,8 +97,8 @@ variable "network_domain" {
 locals {
   ncc_hub_id = "projects/${data.aviatrix_account.this.gcloud_project_id}/locations/global/hubs/${var.ncc_hub_name}"
 
-  transit_pri_self_link = "${data.aviatrix_account.this.gcloud_project_id}/zones/${var.transit_pri_zone}/instances/${var.transit_pri_name}"
-  transit_ha_self_link  = "${data.aviatrix_account.this.gcloud_project_id}/zones/${var.transit_ha_zone}/instances/${var.transit_ha_name}"
+  transit_pri_self_link = "${data.aviatrix_account.this.gcloud_project_id}/zones/${local.transit_pri_zone}/instances/${local.transit_pri_name}"
+  transit_ha_self_link  = "${data.aviatrix_account.this.gcloud_project_id}/zones/${local.transit_ha_zone}/instances/${local.transit_ha_name}"
 
   transit_vpc_id     = var.transit_gateway.vpc_id
   transit_pri_name   = var.transit_gateway.gw_name
