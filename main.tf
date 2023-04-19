@@ -56,11 +56,11 @@ resource "google_network_connectivity_spoke" "avx" {
   hub      = local.ncc_hub_id
   linked_router_appliance_instances {
     instances {
-      virtual_machine = local.transit_pri_self_link
+      virtual_machine = local.transit_pri_name
       ip_address      = local.transit_pri_bgp_ip
     }
     instances {
-      virtual_machine = local.transit_ha_self_link
+      virtual_machine = local.transit_ha_name
       ip_address      = local.transit_ha_bgp_ip
     }
     site_to_site_data_transfer = true
