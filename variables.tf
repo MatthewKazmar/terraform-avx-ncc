@@ -25,62 +25,31 @@ variable "bgp_subnetwork_name" {
 
 variable "transit_gateway" {
   description = "Transit Gateway resource."
-  type = any
+  type = object(
+    {
+      vpc_id             = string,
+      gw_name            = string,
+      private_ip         = string,
+      bgp_lan_ip_list    = list(string),
+      vpc_reg            = string,
+      ha_gw_name         = string,
+      ha_private_ip      = string,
+      ha_bgp_lan_ip_list = list(string),
+      ha_zone            = string,
+      local_as_number    = optional(number)
+    }
+  )
 }
 
 variable "bgp_interface_index" {
   description = "Number of the BGP LAN/LANHA interface."
-  type = number
+  type        = number
 }
 
-# variable "transit_vpc_id" {
-#   description = "VPC ID of Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_pri_name" {
-#   description = "Name of Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_pri_ip" {
-#   description = "IP of Primary Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_pri_bgp_ip" {
-#   description = "IP of Primary Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_pri_zone" {
-#   description = "Zone of Primary Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_ha_ip" {
-#   description = "IP of HA Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_ha_bgp_ip" {
-#   description = "IP of HA Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_ha_zone" {
-#   description = "Zone of HA Transit Gateway"
-#   type        = string
-# }
-
-# variable "transit_ha_name" {
-#   description = "Name of HA Transit Gateway"
-#   type        = string
-# }
-
-variable "avx_asn" {
+variable "transit_asn" {
   description = "ASN of Aviatrix Gateway"
   type        = number
+  default     = null
 }
 
 variable "cr_asn" {
@@ -109,4 +78,5 @@ locals {
   transit_ha_ip      = var.transit_gateway.ha_private_ip
   transit_ha_bgp_ip  = var.transit_gateway.ha_bgp_lan_ip_list[var.bgp_interface_index]
   transit_ha_zone    = var.transit_gateway.ha_zone
+  transit_asn        = coalesce(var.transit_gateway.local_as_number, var.transit_asn)
 }

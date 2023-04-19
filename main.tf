@@ -4,8 +4,8 @@ data "aviatrix_account" "this" {
 
 data "google_compute_subnetwork" "bgp" {
   project = data.aviatrix_account.this.gcloud_project_id
-  name = var.bgp_subnetwork_name
-  region = var.region
+  name    = var.bgp_subnetwork_name
+  region  = var.region
 }
 
 resource "google_compute_router" "this" {
@@ -19,7 +19,7 @@ resource "google_compute_router" "this" {
 }
 
 resource "google_compute_address" "this" {
-  project = data.aviatrix_account.this.gcloud_project_id
+  project  = data.aviatrix_account.this.gcloud_project_id
   for_each = toset(["pri", "ha"])
 
   name         = "${var.ncc_vpc_name}-cr-address-${each.value}"
@@ -30,7 +30,7 @@ resource "google_compute_address" "this" {
 
 
 resource "google_compute_router_interface" "pri" {
-  project = data.aviatrix_account.this.gcloud_project_id
+  project             = data.aviatrix_account.this.gcloud_project_id
   name                = "${var.ncc_vpc_name}-cr-int-pri"
   router              = google_compute_router.this.name
   region              = var.region
@@ -41,7 +41,7 @@ resource "google_compute_router_interface" "pri" {
 
 
 resource "google_compute_router_interface" "ha" {
-  project = data.aviatrix_account.this.gcloud_project_id
+  project            = data.aviatrix_account.this.gcloud_project_id
   name               = "${var.ncc_vpc_name}-cr-int-ha"
   router             = google_compute_router.this.name
   region             = var.region
@@ -50,7 +50,7 @@ resource "google_compute_router_interface" "ha" {
 }
 
 resource "google_network_connectivity_spoke" "avx" {
-  project = data.aviatrix_account.this.gcloud_project_id
+  project  = data.aviatrix_account.this.gcloud_project_id
   name     = "${var.ncc_vpc_name}-ncc-avx"
   location = var.region
   hub      = local.ncc_hub_id
@@ -73,14 +73,14 @@ resource "google_network_connectivity_spoke" "avx" {
 }
 
 resource "google_compute_router_peer" "pri" {
-  project = data.aviatrix_account.this.gcloud_project_id
+  project  = data.aviatrix_account.this.gcloud_project_id
   for_each = { "pri" = 0, "ha" = 1 }
 
   name                      = "${var.ncc_vpc_name}-ncc-avx-crpri-to-${each.key}-gw"
   router                    = google_compute_router.this.name
   region                    = var.region
   peer_ip_address           = [local.transit_pri_bgp_ip, local.transit_ha_bgp_ip][each.value]
-  peer_asn                  = var.avx_asn
+  peer_asn                  = local.transit_asn
   advertised_route_priority = 100
   interface                 = google_compute_router_interface.pri.name
   router_appliance_instance = [google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[0].virtual_machine, google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[1].virtual_machine][each.value]
@@ -94,14 +94,14 @@ resource "google_compute_router_peer" "pri" {
 }
 
 resource "google_compute_router_peer" "ha" {
-  project = data.aviatrix_account.this.gcloud_project_id
+  project  = data.aviatrix_account.this.gcloud_project_id
   for_each = { "pri" = 0, "ha" = 1 }
 
   name                      = "${var.ncc_vpc_name}-ncc-avx-crha-to-${each.key}-gw"
   router                    = google_compute_router.this.name
   region                    = var.region
   peer_ip_address           = [local.transit_pri_bgp_ip, local.transit_ha_bgp_ip][each.value]
-  peer_asn                  = var.avx_asn
+  peer_asn                  = local.transit_asn
   advertised_route_priority = 100
   interface                 = google_compute_router_interface.ha.name
   router_appliance_instance = [google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[0].virtual_machine, google_network_connectivity_spoke.avx.linked_router_appliance_instances[0].instances[1].virtual_machine][each.value]
@@ -120,7 +120,7 @@ resource "aviatrix_transit_external_device_conn" "avx_to_cr" {
   gw_name                   = local.transit_pri_name
   connection_type           = "bgp"
   tunnel_protocol           = "LAN"
-  bgp_local_as_num          = var.avx_asn
+  bgp_local_as_num          = local.transit_asn
   bgp_remote_as_num         = var.cr_asn
   remote_lan_ip             = google_compute_address.this["pri"].address
   local_lan_ip              = local.transit_pri_bgp_ip
