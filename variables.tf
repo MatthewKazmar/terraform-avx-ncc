@@ -3,25 +3,30 @@ variable "avx_gcp_account_name" {
   type        = string
 }
 
-variable "region" {
-  description = "GCP region"
-  type        = string
-}
+# variable "region" {
+#   description = "GCP region"
+#   type        = string
+# }
+
+# variable "create_ncc_hub" {
+#   description = "Create new NCC hub?"
+#   type        = bool
+# }
 
 variable "ncc_hub_name" {
   description = "Name of NCC hub."
   type        = string
 }
 
-variable "ncc_vpc_name" {
-  description = "Name of the NCC hub VPC"
-  type        = string
-}
+# variable "ncc_vpc_name" {
+#   description = "Name of the NCC hub VPC"
+#   type        = string
+# }
 
-variable "bgp_subnetwork_name" {
-  description = "Name of BGP subnet in the NCC hub VPC."
-  type        = string
-}
+# variable "bgp_subnetwork_name" {
+#   description = "Name of BGP subnet in the NCC hub VPC."
+#   type        = string
+# }
 
 variable "transit_gateway" {
   description = "Transit Gateway resource."
@@ -30,6 +35,7 @@ variable "transit_gateway" {
       vpc_id             = string,
       gw_name            = string,
       private_ip         = string,
+      bgp_lan_interfaces = list(any)
       bgp_lan_ip_list    = list(string),
       vpc_reg            = string,
       ha_gw_name         = string,
@@ -79,4 +85,9 @@ locals {
   transit_ha_bgp_ip  = var.transit_gateway.ha_bgp_lan_ip_list[var.bgp_interface_index]
   transit_ha_zone    = var.transit_gateway.ha_zone
   transit_asn        = coalesce(var.transit_gateway.local_as_number, var.transit_asn)
+
+  region              = regex("[a-z]+-[a-z0-9]+", local.transit_pri_zone)
+  ncc_vpc_name        = var.transit_gateway.bgp_lan_interfaces[var.bgp_interface_index].vpc_id
+  bgp_subnet_cidr     = var.transit_gateway.bgp_lan_interfaces[var.bgp_interface_index].subnet
+  bgp_subnet_selflink = one([for k, v in data.google_compute_subnetwork.ncc : k if v.ip_cidr_range == local.bgp_subnet_cidr])
 }
